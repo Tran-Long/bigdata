@@ -1,0 +1,1 @@
+docker volume rm $(docker volume ls | grep bigdata | awk '{print $2}')
