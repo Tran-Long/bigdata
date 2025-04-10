@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Movie Recommendation Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+    <h2 class="mb-4 text-center">🎬 Movie Recommendation Dashboard</h2>
+
+    <!-- Input -->
+    <div class="mb-5 text-center">
+        <label for="userId" class="form-label fw-bold">Enter User ID:</label>
+        <div class="d-flex justify-content-center gap-2">
+            <input type="number" id="userId" class="form-control w-25 text-center" placeholder="Eg: 1">
+            <button onclick="getRecommendations()" class="btn btn-primary">Get Recommendation</button>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div>
+        <h4 class="mb-3 text-center">📌 List Of Recommended Movies</h4>
+        <div id="recommendationList" class="row g-3 justify-content-center"></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <canvas id="barChart"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending -->
+    <hr class="my-5">
+    <div class="text-center">
+        <h4 class="mb-3">🔥 Trending Movies</h4>
+        <button onclick="getTrendingMovies()" class="btn btn-secondary mb-4">Get Trending Movie</button>
+        <div id="trendingList" class="row g-3 justify-content-center"></div>
+    </div>
+
+</div>
+
+<script>
+    function createMovieCard(movie) {
+        return `
+            <div class="col-md-2">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title">${movie.title}</h6>
+                        <p class="card-text"><small>Genres:</small> ${movie.genres?.join(", ") || "N/A"}</p>
+                        ${movie.final_score !== undefined ? `<p><small>Score:</small> ${movie.final_score.toFixed(2)}</p>` : ""}
+                        ${movie.merge_score !== undefined ? `<p><small>Merge Score:</small> ${movie.merge_score.toFixed(2)}</p>` : ""}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    let barChart, pieChart;
+
+    async function getRecommendations() {
+        const userId = document.getElementById("userId").value;
+        if (!userId) return;
+
+        try {
+            const res = await fetch(`http://localhost:8000/api/user/${userId}/recommendations`);
+            const data = await res.json();
+
+            const list = document.getElementById("recommendationList");
+            list.innerHTML = "";
+            data.recommendations.forEach(movie => {
+                list.innerHTML += createMovieCard(movie);
+            });
+
+            renderCharts(data.recommendations);
+
+        } catch (error) {
+            alert("Error while get recommend movie.");
+            console.error(error);
+        }
+    }
+
+    async function getTrendingMovies() {
+        try {
+            const res = await fetch("http://localhost:8000/api/trending/movies");
+            const data = await res.json();
+
+            const list = document.getElementById("trendingList");
+            list.innerHTML = "";
+            data.trending_movies.forEach(movie => {
+                list.innerHTML += createMovieCard(movie);
+            });
+        } catch (error) {
+            alert("Error while get trending movie.");
+            console.error(error);
+        }
+    }
+
+    function renderCharts(recommendations) {
+        const titles = recommendations.map(m => m.title);
+        const scores = recommendations.map(m => m.final_score);
+        const genresFlat = recommendations.flatMap(m => m.genres);
+        const genreCounts = {};
+        genresFlat.forEach(g => genreCounts[g] = (genreCounts[g] || 0) + 1);
+
+        if (barChart) barChart.destroy();
+        if (pieChart) pieChart.destroy();
+
+        // Bar chart
+        barChart = new Chart(document.getElementById("barChart"), {
+            type: "bar",
+            data: {
+                labels: titles,
+                datasets: [{
+                    label: "Final Score",
+                    data: scores,
+                    backgroundColor: "rgba(54, 162, 235, 0.6)"
+                }]
+            }
+        });
+
+        // Pie chart
+        pieChart = new Chart(document.getElementById("pieChart"), {
+            type: "pie",
+            data: {
+                labels: Object.keys(genreCounts),
+                datasets: [{
+                    data: Object.values(genreCounts),
+                    backgroundColor: ["#ff6384", "#36a2eb", "#ffcd56", "#4bc0c0", "#9966ff", "#ff9f40", "#2ecc71"]
+                }]
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
