@@ -1,0 +1,12 @@
+services:
+  serving:
+    image: bigdata/serving:python3.9
+    build: ../serving
+    container_name: serving
+    ports:
+      - "8006:8000"
+    networks:
+      - net
+    volumes:
+      - ../serving:/app
+    command: python main.py

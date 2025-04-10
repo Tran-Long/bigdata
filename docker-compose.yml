@@ -3,6 +3,7 @@ include:
   - deployment/kafka.yaml
   - deployment/spark.yaml
   - deployment/mongodb.yaml
+  - deployment/serving.yaml
 
 networks:
   net:

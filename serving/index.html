@@ -71,7 +71,7 @@
         if (!userId) return;
 
         try {
-            const res = await fetch(`http://localhost:8000/api/user/${userId}/recommendations`);
+            const res = await fetch(`http://localhost:8006/api/user/${userId}/recommendations`);
             const data = await res.json();
 
             const list = document.getElementById("recommendationList");
@@ -90,7 +90,7 @@
 
     async function getTrendingMovies() {
         try {
-            const res = await fetch("http://localhost:8000/api/trending/movies");
+            const res = await fetch("http://localhost:8006/api/trending/movies");
             const data = await res.json();
 
             const list = document.getElementById("trendingList");

@@ -3,13 +3,23 @@ from pydantic import BaseModel
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
+import os
+from dotenv import load_dotenv
+# -----------------------------
+
+load_dotenv("serve.env")
+
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DB = os.getenv("MONGODB_DB", None)
+assert MONGODB_DB is not None, "MONGODB_DB must be set in serve.env file"
 
 app = FastAPI(title="Movie Recommendation")
 
 # Kết nối MongoDB
-client = MongoClient("mongodb://localhost:27017")
-db = client["movie_recommendation"]
+client = MongoClient(MONGODB_URI)
+db = client[MONGODB_DB]
 
+#TODO: Change how to get data from MongoDB
 # -----------------------------
 # Các model dữ liệu
 # -----------------------------
