@@ -1,4 +1,4 @@
-FROM jupyter/pyspark-notebook:spark-3.3.0
+FROM jupyter/pyspark-notebook:spark-3.5.0
 
 WORKDIR /app
 COPY . /app

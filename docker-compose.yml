@@ -1,8 +1,8 @@
-version: '3.7'
 include:
   - deployment/hdfs.yaml
   - deployment/kafka.yaml
   - deployment/spark.yaml
+  - deployment/mongodb.yaml
 
 networks:
   net:

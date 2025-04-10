@@ -1,16 +1,15 @@
-version: "3"
-
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.9.0
+    container_name: zookeeper
     hostname: zookeeper
     ports:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     volumes:
-      - ../data/zookeeper/data:/data
-      - ../data/zookeeper/datalog:/datalog
+      - zookeeper_data:/data
+      - zookeeper_datalog:/datalog
     networks:
       - net
 
@@ -69,7 +68,24 @@ services:
       KAFKA_BROKERCONNECT: kafka-broker-1:19091,kafka-broker-2:29092
     networks:
       - net
-    
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.9.0
+    container_name: kafka-init
+    depends_on:
+      - kafka1
+      - kafka2
+    networks:
+      - net
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "echo 'Waiting for Kafka to be available...'; sleep 20;
+       echo 'Creating topic user_interactions...';
+       kafka-topics --bootstrap-server kafka1:19091,kafka2:29092 --create --if-not-exists --topic user_interactions --replication-factor 2 --partitions 1;
+       echo 'All topics created successfully.';"  
+
 volumes:
   kafka_data1:
   kafka_data2:
+  zookeeper_data:
+  zookeeper_datalog:
