@@ -1,0 +1,36 @@
+##### copy du lieu xuong hdfs #####
+1. copy file data to docker
+docker cp /Users/minhngoc/Documents/SDH/big-data/project/movies/ml-latest/ratings.csv namenode:/tmp/ratings.csv
+docker cp /Users/minhngoc/Documents/SDH/big-data/project/movies/ml-latest/movies.csv namenode:/tmp/movies.csv
+
+2. copy toi hdfs
+docker exec -it namenode hdfs dfs -mkdir -p /movies/movie-data
+docker exec -it namenode hdfs dfs -put /tmp/ratings.csv /movies/movie-data/
+docker exec -it namenode hdfs dfs -put /tmp/movies.csv /movies/movie-data/
+
+3. kiem tra file da co trong hdfs chuan
+docker exec -it namenode hdfs dfs -ls /movies/movie-data
+
+##### chay crob job #####
+1. truy cap vao container spark-client
+docker exec -u root -it spark-client bash
+
+2. tao file sh chua cau lenh chay batch-train (batch_train.sh)
+
+3. Cap quyen thuc thi
+
+chmod +x batch_train.sh
+
+4. Mo crontab
+crontab -e
+
+5. them dong lenh (10 phut chay 1 lan)
+*/10 * * * * /app/data/batch_train.sh
+
+6. khoi dong cron
+service cron start
+
+7. Xem log cron
+cat /app/logs/batch_log.log
+
+
