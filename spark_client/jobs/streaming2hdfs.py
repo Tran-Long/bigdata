@@ -1,14 +1,14 @@
 import os
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col
-from pyspark.sql.types import StructType, IntegerType, LongType
+from pyspark.sql.types import StructType, IntegerType, LongType, FloatType, TimestampType
 
 SPARK_MASTER = os.getenv("SPARK_MASTER", "local[*]")
 
 def main():
     # Initialize SparkSession with Kafka support
     spark = SparkSession.builder \
-        .appName("SpeedLayerToHDFS") \
+        .appName("StreamToHDFSBatchLayer") \
         .master(SPARK_MASTER) \
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
         .getOrCreate()
@@ -17,14 +17,14 @@ def main():
     schema = StructType() \
         .add("user_id", IntegerType()) \
         .add("movie_id", IntegerType()) \
-        .add("rating", IntegerType()) \
+        .add("rating", FloatType()) \
         .add("timestamp", LongType())  # expecting epoch milliseconds
 
     # Read streaming data from the Kafka topic 'user_events'
     kafkaDF = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka1:19091,kafka2:29092") \
-        .option("subscribe", "user_events") \
+        .option("subscribe", "user_interactions") \
         .option("startingOffsets", "latest") \
         .load()
 
@@ -39,8 +39,9 @@ def main():
     query = eventsDF.writeStream \
         .outputMode("append") \
         .format("parquet") \
-        .option("path", "hdfs://namenode:9000/spark/streaming-output") \
-        .option("checkpointLocation", "hdfs://namenode:9000/spark/checkpoints") \
+        .option("path", "hdfs://namenode:9000/movies_recommendation/history_data") \
+        .option("checkpointLocation", "hdfs://namenode:9000/spark/movies_recommendation/checkpoints") \
+        .trigger(processingTime='30 seconds') \
         .start()
 
     # Wait for the streaming query to finish

@@ -81,7 +81,7 @@ def main():
     query = aggregatedDF.writeStream \
         .outputMode("update") \
         .foreachBatch(write_to_mongo) \
-        .option("checkpointLocation", "hdfs://namenode:9000/spark/mongo_checkpoints") \
+        .option("checkpointLocation", "hdfs://namenode:9000/spark/movies_recommendation/mongo_checkpoints") \
         .start()
 
     query.awaitTermination()

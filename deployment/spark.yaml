@@ -54,3 +54,5 @@ services:
       - ../data/spark-client:/app/data
     networks:
       - net
+    command: >
+      bash run.sh
