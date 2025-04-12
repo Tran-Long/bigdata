@@ -1,3 +1,4 @@
 pymongo
 pyspark
 pandas
+numpy

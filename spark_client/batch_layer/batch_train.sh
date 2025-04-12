@@ -9,15 +9,14 @@ fi
 
 touch "$LOCK_FILE"
 echo "[`date`] ✅ Bắt đầu training" >> /app/logs/cron_debug.log
-
 # (2) Xuất biến môi trường nếu cần (ví dụ, conda hoặc venv)
-export PYSPARK_PYTHON=/opt/conda/envs/py38/bin/python
-export PYSPARK_DRIVER_PYTHON=/opt/conda/envs/py38/bin/python
+export PYSPARK_PYTHON=/opt/conda/bin/python
+export PYSPARK_DRIVER_PYTHON=/opt/conda/bin/python
 
 # (3) Optional: thêm path pip packages nếu cần
-export PYTHONPATH="$PYTHONPATH:/opt/conda/envs/py38/lib/python3.8/dist-packages"
+# export PYTHONPATH="$PYTHONPATH:/opt/conda/lib/python3.11/dist-packages"
 
-/usr/local/spark/bin/spark-submit   --master spark://spark-master:7077   --total-executor-cores 4   --executor-memory 2G   --executor-cores 2   /app/data/batch_train.py >> /app/logs/batch_train.log 2>&1
+/usr/local/spark/bin/spark-submit   --master spark://spark-master:7077   --total-executor-cores 4   --executor-memory 2G   --executor-cores 2   /app/batch_layer/batch_train.py >> /app/logs/batch_train.log 2>&1
 
 echo "[`date`] ✅ Xong training" >> /app/logs/cron_debug.log
 rm -f "$LOCK_FILE"

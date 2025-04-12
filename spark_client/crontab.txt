@@ -1,0 +1,1 @@
+*/1 * * * * root /bin/bash /app/batch_layer/batch_train.sh
