@@ -16,12 +16,13 @@ spark = SparkSession.builder \
     .config("spark.mongodb.output.uri", "mongodb://localhost:27017/movies.recommendations") \
     .getOrCreate()
 
+
+
 # 2. Đọc dữ liệu từ HDFS
-ratings = spark.read.csv("hdfs://namenode:9000//movies/movie-data/ratings.csv", header=True, inferSchema=True)
-movies = spark.read.csv("hdfs://namenode:9000//movies/movie-data/movies.csv", header=True, inferSchema=True)
+ratings = spark.read.parquet("hdfs://namenode:9000/movies_recommendation/history_data")
 
 # Lấy 10% dữ liệu ngẫu nhiên
-ratings = ratings.sample(fraction=0.01, seed=42)
+ratings = ratings.sample(fraction=0.1, seed=42)
 # ratings = ratings.orderBy(F.rand()).limit(1000)
 
 # Hiển thị một số dòng dữ liệu đã lấy mẫu
