@@ -1,14 +1,31 @@
 services:
-  spark-master:
+  spark-master-1:
     image: spark:3.5.0-python3
-    container_name: spark-master
+    container_name: spark-master-1
     ports:
       - "8085:8080"
       # - "7077:7077"
     environment:
-      - INIT_DAEMON_STEP=setup_spark
+      - SPARK_MASTER_OPTS=-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zookeeper:2181 -Dspark.deploy.zookeeper.dir=/spark
     networks:
       - net
+    depends_on:
+      - zookeeper
+    command: >
+      bash -c "cd /opt/spark/sbin/ && bash start-master.sh && tail -f /dev/null"
+
+  spark-master-2:
+    image: spark:3.5.0-python3
+    container_name: spark-master-2
+    ports:
+      - "8086:8080"
+      # - "7077:7077"
+    environment:
+      - SPARK_MASTER_OPTS=-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zookeeper:2181 -Dspark.deploy.zookeeper.dir=/spark
+    networks:
+      - net
+    depends_on:
+      - zookeeper
     command: >
       bash -c "cd /opt/spark/sbin/ && bash start-master.sh && tail -f /dev/null"
       
@@ -16,7 +33,8 @@ services:
     image: spark:3.5.0-python3
     container_name: spark-worker-1
     depends_on:
-      - spark-master
+      - spark-master-1
+      - spark-master-2
     env_file:
       - ./spark.env
     networks:
@@ -28,7 +46,8 @@ services:
     image: spark:3.5.0-python3
     container_name: spark-worker-2
     depends_on:
-      - spark-master
+      - spark-master-1
+      - spark-master-2
     env_file:
       - ./spark.env
     networks:
@@ -42,7 +61,8 @@ services:
     build: ../spark_client/
     container_name: spark-client
     depends_on:
-      - spark-master
+      - spark-master-1
+      - spark-master-2
       - spark-worker-1
       - spark-worker-2
     ports:

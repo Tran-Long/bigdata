@@ -1,9 +1,11 @@
-FROM jupyter/pyspark-notebook:spark-3.5.0
+FROM python:3.8.10
 
-USER root
 WORKDIR /app
 
 COPY . /app
+
+RUN apt update
+RUN apt install -y openjdk-11-jdk
 
 RUN pip install --no-cache-dir -r requirements.txt
 RUN chmod +x ./submit_jobs.sh ./run.sh

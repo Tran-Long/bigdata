@@ -1,18 +1,4 @@
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.9.0
-    container_name: zookeeper
-    hostname: zookeeper
-    ports:
-      - "2181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-    volumes:
-      - zookeeper_data:/data
-      - zookeeper_datalog:/datalog
-    networks:
-      - net
-
   kafka1:
     image: confluentinc/cp-kafka:7.9.0
     hostname: kafka1

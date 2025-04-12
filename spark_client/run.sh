@@ -3,7 +3,6 @@ set -e
 
 # Run your custom script to submit Spark jobs.
 echo "Running Spark job submission script..."
-sleep 5;
 bash ./submit_jobs.sh
 
 # Now, execute the original command to start the Jupyter server.

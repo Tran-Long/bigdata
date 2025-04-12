@@ -1,3 +1,4 @@
 pymongo
-pyspark
+pyspark==3.5.0
 pandas
+jupyter
