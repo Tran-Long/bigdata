@@ -13,13 +13,13 @@ from pyspark.sql import functions as F
 # 1. Tạo SparkSession
 spark = SparkSession.builder \
     .appName("MovieRecommenderBatch") \
-    .config("spark.mongodb.output.uri", "mongodb://localhost:27017/movies.recommendations") \
+    .config("spark.mongodb.output.uri", "mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=myReplicaSet") \
     .getOrCreate()
 
 
 
 # 2. Đọc dữ liệu từ HDFS
-ratings = spark.read.parquet("hdfs://namenode:9000/movies_recommendation/history_data")
+ratings = spark.read.parquet("hdfs://namenode:9000/movies_recommendation/history_data/*")
 
 # Lấy 10% dữ liệu ngẫu nhiên
 ratings = ratings.sample(fraction=0.1, seed=42)
@@ -31,17 +31,17 @@ ratings.show(10)
 ratings_count = ratings.count()
 
 # In ra số lượng bản ghi
-print(f"Total number of records in ratings: {ratings_count}")
+print(f">>>> Total number of records in ratings: {ratings_count}")
 
 # Thêm cột random để trộn dữ liệu
 ratings = ratings.withColumn("rand", rand())
 
 # Đánh số thứ tự mỗi dòng theo từng user
-windowSpec = Window.partitionBy("userId").orderBy("rand")
+windowSpec = Window.partitionBy("user_id").orderBy("rand")
 ratings = ratings.withColumn("row_num", row_number().over(windowSpec))
 
 # Đếm số lượng rating của mỗi user
-user_counts = ratings.groupBy("userId").count().withColumnRenamed("count", "total")
+user_counts = ratings.groupBy("user_id").count().withColumnRenamed("count", "total")
 
 # Tính train_limit = floor(0.8 * total), nhưng nếu chỉ có 1 rating thì train_limit = 1
 user_counts = user_counts.withColumn(
@@ -50,7 +50,7 @@ user_counts = user_counts.withColumn(
 )
 
 # Gộp lại với ratings
-ratings = ratings.join(user_counts, on="userId", how="inner")
+ratings = ratings.join(user_counts, on="user_id", how="inner")
 
 # Chia train/test
 train_df = ratings.filter(col("row_num") <= col("train_limit")).drop("rand", "row_num", "total", "train_limit")
@@ -59,12 +59,12 @@ print(f'tessssssss: {test_df.count()}')
 
 # === 4. Huấn luyện mô hình ALS
 als = ALS(
-    userCol="userId",
-    itemCol="movieId",
+    userCol="user_id",
+    itemCol="movie_id",
     ratingCol="rating",
     coldStartStrategy="drop",
     nonnegative=True,
-    maxIter=10,
+    maxIter=2,
     regParam=0.1
 )
 
@@ -94,7 +94,7 @@ else:
 
     # 2. Explode để tách từng gợi ý ra thành hàng riêng
     exploded = recommendations.withColumn("rec", explode("recommendations")) \
-        .select("userId", col("rec.movieId").alias("movieId"), col("rec.rating").alias("rating"))
+        .select("user_id", col("rec.movie_id").alias("movie_id"), col("rec.rating").alias("rating"))
 
     # 3. Tính min-max rating
     rating_stats = exploded.agg(
@@ -111,9 +111,9 @@ else:
     )
 
     # 5. Gom lại thành recommendations array giống ban đầu
-    repacked = scaled.select("userId", "movieId", "scaled_rating", "rating") \
-        .withColumn("rec", struct(col("movieId"), col("rating"), col("scaled_rating"))) \
-        .groupBy("userId") \
+    repacked = scaled.select("user_id", "movie_id", "scaled_rating", "rating") \
+        .withColumn("rec", struct(col("movie_id"), col("rating"), col("scaled_rating"))) \
+        .groupBy("user_id") \
         .agg(collect_list("rec").alias("recommendations"))
 
     # 6. Chuyển sang Pandas để lưu vào MongoDB
@@ -130,7 +130,7 @@ else:
 
     # 8. Kết nối MongoDB và lưu
     client = MongoClient("mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=myReplicaSet")
-    db = client["movies"]
+    db = client["movies_recommendation"]
     collection = db["user_recommendations"]
 
     collection.delete_many({})

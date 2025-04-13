@@ -10,6 +10,9 @@ def main():
     spark = SparkSession.builder \
         .appName("StreamToHDFSBatchLayer") \
         .master(SPARK_MASTER) \
+        .config("spark.cores.max", "1") \
+        .config("spark.executor.memory", "1G") \
+        .config("spark.executor.cores", "1") \
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
         .getOrCreate()
 

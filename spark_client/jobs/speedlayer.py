@@ -15,7 +15,6 @@ def write_to_mongo(batch_df, batch_id):
     # Convert Spark DataFrame to Pandas DataFrame
     records = batch_df.toPandas().to_dict(orient="records")
     
-    # Connect to the MongoDB cluster (modify host/port as necessary; here, 'mongo' is the master)
     client = pymongo.MongoClient("mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=myReplicaSet")
     db = client["movies_recommendation"]
     collection = db["top_movie_in_one_hours"]
@@ -43,6 +42,9 @@ def main():
     spark = SparkSession.builder \
         .appName("SpeedLayer") \
         .master(SPARK_MASTER) \
+        .config("spark.cores.max", "4") \
+        .config("spark.executor.memory", "6G") \
+        .config("spark.executor.cores", "2") \
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
         .getOrCreate()
     
@@ -53,7 +55,6 @@ def main():
         .add("rating", FloatType()) \
         .add("timestamp", LongType())  # epoch milliseconds
 
-    # Read streaming data from Kafka topic 'user_events'
     kafkaDF = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", "kafka1:19091,kafka2:29092") \
@@ -61,13 +62,8 @@ def main():
         .option("startingOffsets", "latest") \
         .load()
 
-    # Parse the Kafka message and extract event fields.
     eventsDF = kafkaDF.select(from_json(col("value").cast("string"), schema).alias("event")).select("event.*")
-    
-    # Create a proper timestamp column for windowing by converting epoch milliseconds.
     eventsDF = eventsDF.withColumn("event_time", (col("timestamp") / 1000).cast(TimestampType()))
-    
-    # Perform windowed aggregation:
     # Group events into 1-hour windows with a slide interval of 15 minutes.
     aggregatedDF = eventsDF.groupBy(
         window(col("event_time"), "30 minutes", "30 seconds"),

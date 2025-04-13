@@ -15,9 +15,9 @@ num_scripts=${#scripts[@]}
 spark-submit \
   --master "$SPARK_MASTER" \
   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
-  --total-executor-cores "$TOTAL_CORE_PER_SPARK_TASK" \
-  --executor-cores "$CORE_PER_SPARK_TASK" \
-  --executor-memory "$MEM_PER_SPARK_TASK" \
+  --total-executor-cores "1" \
+  --executor-cores "1" \
+  --executor-memory "1G" \
   ./jobs/init.py
 
 for i in "${!scripts[@]}"; do
@@ -34,6 +34,7 @@ for i in "${!scripts[@]}"; do
     --executor-cores "$CORE_PER_SPARK_TASK" \
     --executor-memory "$MEM_PER_SPARK_TASK" \
     "$script" &
+    sleep 20
 done
 
 # Wait for all background jobs to finish

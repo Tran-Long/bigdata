@@ -6,13 +6,12 @@ COPY . /app
 
 RUN apt update
 RUN apt install -y openjdk-11-jdk
+# Cài đặt cron
+RUN apt-get update && apt-get install -y cron
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 
-# Cài đặt cron
-USER root
-RUN apt-get update && apt-get install -y cron
 
 # Copy file crontab và script cron
 COPY crontab.txt /etc/cron.d/batch-cron
